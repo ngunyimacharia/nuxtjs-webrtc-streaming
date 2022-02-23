@@ -3,8 +3,8 @@
     <div class="aspect-w-16 aspect-h-6 overflow-hidden">
       <video id="video" class="w-full bg-gray-500"></video>
     </div>
-    <div v-if="liveStream">
-      <div class="text-center">
+    <div>
+      <div v-if="liveStream" class="text-center">
         <button 
           class="inline-flex items-center m-3 px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" 
           v-if="!videoShowing"
@@ -27,14 +27,21 @@
       <div class="text-center">
         <button 
           class="inline-flex items-center m-3 px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" 
-          v-if="!streaming" 
+          v-if="!liveStream && !initializing" 
+          @click="initializeStream"
+        >
+          Initialize Stream
+        </button>
+        <button 
+          class="inline-flex items-center m-3 px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" 
+          v-if="liveStream && !streaming" 
           @click="startStream"
         >
           Start Streaming
         </button>
         <button 
           class="inline-flex items-center m-3 px-2.5 py-1.5 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          v-else 
+          v-else-if="liveStream"
           @click="stopStream"
         >
           Stop Streaming
@@ -66,7 +73,7 @@
                     {{
                       liveStream 
                       ? (streaming ? "Streaming" : "Not streaming")
-                      : "Initializing" 
+                      : (initializing ? "Initializing" : "Not initialized")
                     }}
                   </td>
                 </tr>
@@ -133,44 +140,11 @@ export default {
     return {
       cloudinaryJsStreaming:null,
       videoElement: null,
+      initializing:false,
       liveStream: false,
       streaming:false,
       videoShowing:false,
     };
-  },
-
-  async mounted(){
-
-    if(
-        !process.env.NUXT_ENV_CLOUDINARY_CLOUD_NAME || 
-        !process.env.NUXT_ENV_CLOUDINARY_STREAMING_UPLOAD_PRESET
-      ){
-      return;
-    }
-
-    this.videoElement = document.getElementById("video");
-    
-    this.cloudinaryJsStreaming = cloudinaryJsStreaming;
-
-    this.liveStream = await this.cloudinaryJsStreaming.initLiveStream({
-        cloudName: process.env.NUXT_ENV_CLOUDINARY_CLOUD_NAME,
-        uploadPreset: process.env.NUXT_ENV_CLOUDINARY_STREAMING_UPLOAD_PRESET,
-        debug: "all",
-        hlsTarget: true,
-        fileTarget: true,
-        events: {
-            start: function (args) {
-              console.log("start",args);
-            },
-            stop: function (args) {
-              console.log("stop",args);
-            },
-            error: function(error){
-              console.log("error",error);
-            },
-            local_stream: stream => this.attachStream(stream)
-        }
-    });
   },
 
   computed:{
@@ -187,6 +161,43 @@ export default {
   },
 
   methods:{
+    async initializeStream(){
+      this.initializing = true;
+      if(
+          !process.env.NUXT_ENV_CLOUDINARY_CLOUD_NAME || 
+          !process.env.NUXT_ENV_CLOUDINARY_STREAMING_UPLOAD_PRESET
+        ){
+        this.initializing = false;
+        return;
+      }
+
+      this.videoElement = document.getElementById("video");
+      
+      this.cloudinaryJsStreaming = cloudinaryJsStreaming;
+
+      this.liveStream = await this.cloudinaryJsStreaming.initLiveStream({
+          cloudName: process.env.NUXT_ENV_CLOUDINARY_CLOUD_NAME,
+          uploadPreset: process.env.NUXT_ENV_CLOUDINARY_STREAMING_UPLOAD_PRESET,
+          debug: "all",
+          hlsTarget: true,
+          fileTarget: true,
+          events: {
+              start: function (args) {
+                console.log("start",args);
+              },
+              stop: function (args) {
+                console.log("stop",args);
+              },
+              error: function(error){
+                console.log("error",error);
+              },
+              local_stream: stream => this.attachStream(stream)
+          }
+      });
+
+      this.initializing = false;
+    },
+
     startStream(){
       this.liveStream.start(this.liveStream.response.public_id);
     },
