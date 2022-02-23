@@ -54,6 +54,8 @@
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
           <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
             <table class="min-w-full divide-y divide-gray-200">
+              <tbody>
+
                 <!-- Even row -->
                 <tr class="bg-gray-50">
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -122,14 +124,13 @@
                     {{ liveStream  ? fileURL : ""}}
                   </td>
                 </tr>
-                
+              
+              </tbody>
             </table>
           </div>
         </div>
       </div>
     </div>
-
-    <script src="https://unpkg.com/@cloudinary/js-streaming/dist/js-streaming.js"></script>
   </div>
 </template>
 
