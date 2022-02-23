@@ -140,6 +140,14 @@ export default {
   },
 
   async mounted(){
+
+    if(
+        !process.env.NUXT_ENV_CLOUDINARY_CLOUD_NAME || 
+        !process.env.NUXT_ENV_CLOUDINARY_STREAMING_UPLOAD_PRESET
+      ){
+      return;
+    }
+
     this.videoElement = document.getElementById("video");
     
     this.cloudinaryJsStreaming = cloudinaryJsStreaming;
